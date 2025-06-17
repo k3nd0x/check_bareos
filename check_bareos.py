@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# vim: showmatch ts=4 sts=4 sw=4 autoindent smartindent smarttab expandtab
-
 ##########################################################################
 # check_bareos.py
 #
 # Author: https://github.com/k3nd0x
-# Date 05.07.2022
-# 
-# Version: 0.1 
+# Date 17.06.2025
+#
+# Version: 0.1
 # This program is free software; you can redistribute it or modify
 #
 # Plugin check for icinga2
-# Disclaimer: This plugin is under development and s not for production use 
+# Disclaimer: This plugin is under development and is not for production use
+
 
 
 
@@ -38,12 +36,12 @@ def args():
     return args
 
 def get_token(user,pw,host,port):
-    
+
     headers = {
         'accept': 'application/json',
     }
     data = {
-        'grant_type': '',
+        'grant_type': 'password',
         'username': user,
         'password': pw,
         'scope': '',
@@ -69,7 +67,7 @@ def convert_byte(byte):
     p = math.pow(1024, i)
     s = round(byte / p, 2)
     return s, size_name[i]
-    
+
 
 
 def _api_request(method="get", token=None, url=None, data={}):
@@ -115,7 +113,7 @@ def _api_request(method="get", token=None, url=None, data={}):
 def _get_jobtotals(token):
 
     url = 'control/jobs'
-    data = { "hours": 24 } 
+    data = { "hours": 24 }
     data = _api_request("get",token,url,data).json()
 
     job_total = data["totalItems"]
@@ -137,7 +135,7 @@ def _get_jobtotals(token):
         if job["jobstatus"] == "E":
             status = "[CRITICAL]"
             code = 2
-            
+
         elif job["jobstatus"] == "W":
             status = "[WARNING]"
             code = 1
@@ -153,12 +151,12 @@ def _get_jobtotals(token):
         job_bytes, unit = convert_byte(int(job_bytes))
 
         job_bytes = str(job_bytes) + unit
-        
+
         jobs.append({"jobid": job["jobid"], "client": job["client"], "level": level, "status": status,
         "code": code, "duration": job["duration"], "countfiles": job["jobfiles"], "jobsize": job_bytes})
-        
 
-    jobs = sorted(jobs, key=lambda d: d['jobid'],reverse=True) 
+
+    jobs = sorted(jobs, key=lambda d: d['jobid'],reverse=True)
     output = ""
     for i in jobs:
         if i["client"] not in output:
@@ -186,7 +184,7 @@ def _get_jobtotals(token):
 
 def _get_pools(token):
     url = 'control/jobs/totals'
-    #data = { "hours": 24 } 
+    #data = { "hours": 24 }
     data = _api_request("get",token,url).json()
 
     jp(data)
