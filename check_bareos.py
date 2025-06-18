@@ -132,7 +132,10 @@ def _get_jobtotals(token):
         else:
             level = job["level"]
 
-        if job["jobstatus"] == "E":
+        if job["jobstatus"] == "f":
+            status = "[CRITICAL]"
+            code = 2
+        elif job["jobstatus"] == "E":
             status = "[CRITICAL]"
             code = 2
 
@@ -176,10 +179,7 @@ def _get_jobtotals(token):
     else:
         output_header = "[OK] {} of {} Jobs ok:".format(max_ok,max_code)
 
-    print(output_header)
-    print(output)
-
-    sys.exit(max(code_max))
+    return max(code_max), output_header, output
 
 
 def _get_pools(token):
@@ -197,9 +197,12 @@ if __name__ == "__main__":
     token = get_token(arg.user,arg.password,arg.host,arg.port)
 
     if arg.mode == "jobs":
-        _get_jobtotals(token)
+        error_code, output_header, output = _get_jobtotals(token)
     elif arg.mode == "pools":
         _get_pools(token)
     else:
         _get_jobtotals(token)
 
+    print(output_header)
+    print(output)
+    sys.exit(error_code)
