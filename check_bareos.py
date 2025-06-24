@@ -153,6 +153,10 @@ def _get_jobtotals(token):
             status = "[OK]"
             bareos_status = "RUNNING"
             code = 0
+        elif job["jobstatus"] == "C":
+            status = "[CRITICAL]"
+            bareos_status = "CREATED"
+            code = 2
         else:
             status = "[OK]"
             bareos_status = job["jobstatus"]
@@ -162,15 +166,20 @@ def _get_jobtotals(token):
         job_bytes, unit = convert_byte(int(job_bytes))
         job_bytes = str(job_bytes) + unit
 
+        duration = job.get("duration", "0")
+
+        if duration == "":
+            duration = "0"
+
         jobs.append({"jobid": job["jobid"], "client": job["client"], "level": level, "status": status,
-        "code": code, "duration": job["duration"], "countfiles": job["jobfiles"], "jobsize": job_bytes})
+        "code": code, "duration": duration, "countfiles": job["jobfiles"], "jobsize": job_bytes, "bareos_status": bareos_status})
 
 
     jobs = sorted(jobs, key=lambda d: d['jobid'],reverse=True)
     output = ""
     for i in jobs:
         if i["client"] not in output:
-            output += "{} JobID: {} - {} (Level: {}, RunTime: {}, Use: {}, Files: {})\n".format(i["status"], i["jobid"], i["client"], i["level"], i["duration"], i["jobsize"], i["countfiles"])
+            output += "{} JobID: {} - {} (Level: {}, RunTime: {}, Status: {}, Use: {}, Files: {})\n".format(i["status"], i["jobid"], i["client"], i["level"], i["duration"],i["bareos_status"], i["jobsize"], i["countfiles"])
             code_max.append(i["code"])
 
     max_crit = code_max.count(2)
@@ -180,7 +189,7 @@ def _get_jobtotals(token):
     max_code = len(code_max)
 
     if max_crit > 0:
-        output_header = "[CRITICAL] {} of {} Jobs failed:".format(max_crit,max_code)
+        output_header = "[CRITICAL] {} of {} Jobs have a problem:".format(max_crit,max_code)
     elif max_warn > 0:
         output_header = "[WARNING] {} of {} Jobs are in warning state:".format(max_warn,max_code)
     else:
